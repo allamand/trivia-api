@@ -1,0 +1,33 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      # Install CDK
+      - npm install -g npm@7.19.1 aws-cdk@1.110.0
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip > /dev/null
+      - sudo ./aws/install
+
+  build:
+    commands:
+      # Set up environment variables
+      - AWS_ACCOUNT_ID=`echo $CODEBUILD_BUILD_ARN | awk -F":" '{print $5}'`
+      - ECR_REPO=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      #Authent private ECR to push images
+      - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin $ECR_REPO
+      #Authent public ECR to pull images
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+      # Build Docker image
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
+      - docker push $ECR_REPO:$IMAGE_TAG
+      # Synthesize CloudFormation templates
+      - cd cdk
+      - npm ci
+      - npm run build
+      - cdk synth  > ../template.yml
+
+artifacts:
+  files:
+    - template.yml
