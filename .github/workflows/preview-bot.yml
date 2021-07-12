@@ -1,0 +1,52 @@
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled, reopened, closed]
+
+name: preview-bot
+
+env:
+  PREVIEW_STACK_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.number }}
+  AWS_DEFAULT_REGION: eu-west-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  open-pull-request:
+    name: create-aws-preview
+    if: 'github.event.action != ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO_NAME: preview-bot-preview-images
+      IMAGE_TAG: ${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1.0.0
+      - name: Build and push container image
+        run: |
+          AWS_ACCOUNT_ID=`aws sts get-caller-identity --query 'Account' --output text`
+          ECR_REPO=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+          $(aws ecr get-login --no-include-email)
+          docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REPO:$IMAGE_TAG
+      - name: Generate CloudFormation template
+        #run: ./generate-cfn-template.sh
+        run: |
+          sudo npm install -g aws-cdk
+          cd cdk
+          npm run build
+          cdk synth  > ../template.yml
+      - name: Create preview environment CloudFormation stack
+        run: aws cloudformation deploy --stack-name $PREVIEW_STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
+      - name: Retrieve preview environment URL
+        run: aws cloudformation describe-stacks --stack-name $PREVIEW_STACK_NAME --query 'Stacks[].Outputs[].OutputValue' | grep "http://"
+
+  close-pull-request:
+    name: delete-aws-preview
+    if: 'github.event.action == ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "sallaman-bot"'')'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete preview environment CloudFormation stack
+        run: |
+          aws cloudformation delete-stack --stack-name $PREVIEW_STACK_NAME
+          aws cloudformation wait stack-delete-complete --stack-name $PREVIEW_STACK_NAME
