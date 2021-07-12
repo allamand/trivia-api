@@ -6,7 +6,7 @@ name: preview-bot
 
 env:
   PREVIEW_STACK_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.number }}
-  #AWS_DEFAULT_REGION: eu-west-1
+  AWS_DEFAULT_REGION: eu-west-1
   #AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   #AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -28,7 +28,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # if you have/need it
-          aws-region: $AWS_DEFAULT_REGION
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
       - name: Build and push container image
         run: |
@@ -52,7 +52,7 @@ jobs:
 
   close-pull-request:
     name: delete-aws-preview
-    if: 'github.event.action == ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "sallaman-bot"'')'
+    if: 'github.event.action == ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
     runs-on: ubuntu-latest
     steps:
       - name: Delete preview environment CloudFormation stack
