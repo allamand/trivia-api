@@ -15,9 +15,15 @@ jobs:
     name: create-aws-preview
     if: 'github.event.action != ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
     runs-on: ubuntu-latest
+    environment:
+      name: prod
+      #url: URL_OF_THE_DEPLOYMENT
     env:
-      IMAGE_REPO_NAME: preview-bot-preview-images
+      #ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      ECR_REPOSITORY: preview-bot-preview-images
       IMAGE_TAG: ${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.sha }}
+      #IMAGE_TAG= ${{ github.sha }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v1.0.0
@@ -31,23 +37,43 @@ jobs:
           #aws-region: ${{ env.AWS_DEFAULT_REGION }}
           aws-region: eu-west-1
 
-      - name: Build and push container image
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          AWS_ACCOUNT_ID=`aws sts get-caller-identity --query 'Account' --output text`
-          ECR_REPO=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
-          $(aws ecr get-login --no-include-email)
-          docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
-          docker push $ECR_REPO:$IMAGE_TAG
+          # Build a docker container and
+          # push it to ECR so that it can
+          # be deployed to ECS.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+        #      - name: Build and push container image
+        #        run: |
+        #          AWS_ACCOUNT_ID=`aws sts get-caller-identity --query 'Account' --output text`
+        #          ECR_REPO=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+        #          $(aws ecr get-login --no-include-email)
+        #          docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+        #          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_REPO:$IMAGE_TAG
+        #          docker push $ECR_REPO:$IMAGE_TAG
+
       - name: Generate CloudFormation template
         #run: ./generate-cfn-template.sh
         run: |
           sudo npm install -g aws-cdk
           cd cdk
+          npm ci
           npm run build
           cdk synth  > ../template.yml
+
       - name: Create preview environment CloudFormation stack
         run: aws cloudformation deploy --stack-name $PREVIEW_STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
+
       - name: Retrieve preview environment URL
         run: aws cloudformation describe-stacks --stack-name $PREVIEW_STACK_NAME --query 'Stacks[].Outputs[].OutputValue' | grep "http://"
 
