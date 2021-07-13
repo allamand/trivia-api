@@ -59,7 +59,7 @@ jobs:
     #   #url: URL_OF_THE_DEPLOYMENT
     env:
       #ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      ECR_REPOSITORY: preview-bot-preview-images
+      ECR_REPOSITORY: ${{ github.event.repository.name }}
       IMAGE_TAG: ${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.sha }}
       #IMAGE_TAG: ${{ github.sha }}
 
