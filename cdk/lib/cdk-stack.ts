@@ -11,9 +11,10 @@ import { Certificate } from '@aws-cdk/aws-certificatemanager';
 interface TriviaBackendStackProps extends cdk.StackProps {
   vpcTagName?: string; // Specify if you want to reuse existing VPC (or "default" for default VPC), else it will create a new one
   existingClusterName?: string; // Specify if you want to reuse existing ECS cluster, else it will create new one
-  //domainName: string;
   domainZone: string;
   domainName: string;
+  repoName: string;
+  tag: string;
 }
 
 export class TriviaBackendStack extends cdk.Stack {
@@ -21,12 +22,12 @@ export class TriviaBackendStack extends cdk.Stack {
     super(scope, id, props);
 
     // Configuration parameters
-    const repoName = process.env.ECR_REPOSITORY ? process.env.ECR_REPOSITORY : 'need-to-configure-ECR_REPOSITORY';
-    const tag = process.env.IMAGE_TAG ? process.env.IMAGE_TAG : 'latest';
-    const domainName = process.env.DOMAIN_NAME ? process.env.DOMAIN_NAME : 'trivia';
+    
+    
+    
     const domainZone = HostedZone.fromLookup(this, 'Zone', { domainName: props.domainZone });
-    const imageRepo = Repository.fromRepositoryName(this, 'Repo', repoName);
-    const image = ContainerImage.fromEcrRepository(imageRepo, tag);
+    const imageRepo = Repository.fromRepositoryName(this, 'Repo', props.repoName);
+    const image = ContainerImage.fromEcrRepository(imageRepo, props.tag);
 
     var vpc = undefined;
     if (props.vpcTagName) {
@@ -51,7 +52,7 @@ export class TriviaBackendStack extends cdk.Stack {
       });
     } else {
       cluster = new Cluster(this, 'Cluster', {
-        clusterName: tag + '-' + props.domainZone.replace(/\./g, '-'),
+        clusterName: props.tag + '-' + props.domainZone.replace(/\./g, '-'),
         vpc,
         containerInsights: true,
       });
