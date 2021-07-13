@@ -6,10 +6,12 @@ on:
 
 env:
   PREVIEW_STACK_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.number }}
+  APP_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.pull_request.number }}
   AWS_DEFAULT_REGION: eu-west-1
 
 jobs:
   Build:
+    if: 'github.event.action != ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -93,6 +95,13 @@ jobs:
     if: 'github.event.action == ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
     runs-on: ubuntu-latest
     steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
       - name: Delete preview environment CloudFormation stack
         run: |
           aws cloudformation delete-stack --stack-name $PREVIEW_STACK_NAME
