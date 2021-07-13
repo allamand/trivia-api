@@ -20,7 +20,7 @@ export class TriviaBackendStack extends cdk.Stack {
     super(scope, id, props);
 
     // Configuration parameters
-    const repoName = process.env.IMAGE_REPO_NAME ? process.env.IMAGE_REPO_NAME : 'reinvent-trivia-backend';
+    const repoName = process.env.ECR_REPOSITORY ? process.env.ECR_REPOSITORY : 'need-to-configure-ECR_REPOSITORY';
     const tag = process.env.IMAGE_TAG ? process.env.IMAGE_TAG : 'latest';
     const domainZone = HostedZone.fromLookup(this, 'Zone', { domainName: props.domainZone });
     const imageRepo = Repository.fromRepositoryName(this, 'Repo', repoName);
@@ -77,7 +77,7 @@ export class TriviaBackendStack extends cdk.Stack {
       propagateTags: PropagatedTagSource.SERVICE,
     });
     new CfnOutput(this, 'EcsService', { value: service.service.serviceName });
-    new CfnOutput(this, 'ServiceURLCustom', { value: 'https://' + tag + '.' + props.domainZone });
+    //new CfnOutput(this, 'ServiceURLCustom', { value: 'https://' + tag + '.' + props.domainZone });
 
     // Speed up deployments
     service.targetGroup.setAttribute('deregistration_delay.timeout_seconds', '30');
