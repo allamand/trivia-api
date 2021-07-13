@@ -2,7 +2,7 @@ name: prod
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
     types: [closed]
     branches:
@@ -16,7 +16,7 @@ env:
 jobs:
   Build:
     name: build-prod
-    if: github.event.pull_request.merged
+    if: "github.event.pull_request.merged || github.ref == 'refs/heads/master'"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -52,7 +52,7 @@ jobs:
   deploy-prod:
     name: create-aws-prod
     needs: [Build]
-    if: github.event.pull_request.merged
+    if: "github.event.pull_request.merged || github.ref == 'refs/heads/master'"
     runs-on: ubuntu-latest
     # # environment:
     #   name: prod
