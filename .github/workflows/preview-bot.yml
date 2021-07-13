@@ -72,6 +72,7 @@ jobs:
       - name: Generate CloudFormation template
         id: cdk-synth
         env:
+          DOMAIN_NAME: ${{ env.PREVIEW_STACK_NAME }}
           DOMAIN_ZONE: ecs.demo3.allamand.com
           VPC_TAG_NAME: JenkinsKanikoStack/jenkins-vpc
           CLUSTER_NAME: jenkins-cluster
