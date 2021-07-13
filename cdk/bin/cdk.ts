@@ -11,7 +11,7 @@ const vpcTagName = process.env.VPC_TAG_NAME ? process.env.VPC_TAG_NAME : 'Jenkin
 const existingClusterName = process.env.CLUSTER_NAME ? process.env.CLUSTER_NAME : 'jenkins-cluster';
 
 new TriviaBackendStack(app, 'TriviaBackendStack', {
-  //domainName: domainName,
+  domainName: domainName,
   domainZone: domainZone,
   vpcTagName: vpcTagName,
   existingClusterName: existingClusterName,

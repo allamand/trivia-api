@@ -13,6 +13,7 @@ interface TriviaBackendStackProps extends cdk.StackProps {
   existingClusterName?: string; // Specify if you want to reuse existing ECS cluster, else it will create new one
   //domainName: string;
   domainZone: string;
+  domainName: string;
 }
 
 export class TriviaBackendStack extends cdk.Stack {
@@ -22,6 +23,7 @@ export class TriviaBackendStack extends cdk.Stack {
     // Configuration parameters
     const repoName = process.env.ECR_REPOSITORY ? process.env.ECR_REPOSITORY : 'need-to-configure-ECR_REPOSITORY';
     const tag = process.env.IMAGE_TAG ? process.env.IMAGE_TAG : 'latest';
+    const domainName = process.env.DOMAIN_NAME ? process.env.DOMAIN_NAME : 'trivia';
     const domainZone = HostedZone.fromLookup(this, 'Zone', { domainName: props.domainZone });
     const imageRepo = Repository.fromRepositoryName(this, 'Repo', repoName);
     const image = ContainerImage.fromEcrRepository(imageRepo, tag);
@@ -61,8 +63,6 @@ export class TriviaBackendStack extends cdk.Stack {
       parameterName: 'CertificateArn-' + props.domainZone,
     }).stringValue;
     const certificate = Certificate.fromCertificateArn(this, 'Cert', certificateArn);
-    //don't share internal aws identifier
-    //new CfnOutput(this, 'CertificatArn', { value: certificate.certificateArn });
 
     // Create Fargate service + load balancer
     const service = new ApplicationLoadBalancedFargateService(this, 'Service', {
@@ -71,13 +71,13 @@ export class TriviaBackendStack extends cdk.Stack {
         image,
       },
       desiredCount: 1,
-      domainName: tag + '.' + props.domainZone,
+      domainName: props.domainName + '.' + props.domainZone,
       domainZone,
       certificate,
       propagateTags: PropagatedTagSource.SERVICE,
     });
     new CfnOutput(this, 'EcsService', { value: service.service.serviceName });
-    //new CfnOutput(this, 'ServiceURLCustom', { value: 'https://' + tag + '.' + props.domainZone });
+    //new CfnOutput(this, 'ServiceURLCustom', { value: 'https://' + props.domainName + '.' + props.domainZone });
 
     // Speed up deployments
     service.targetGroup.setAttribute('deregistration_delay.timeout_seconds', '30');
@@ -88,8 +88,5 @@ export class TriviaBackendStack extends cdk.Stack {
       unhealthyThresholdCount: 3,
       timeout: Duration.seconds(4),
     });
-    // new cdk.CfnOutput(this, 'ServiceURL', {
-    //   value: 'http://' + service.loadBalancer.loadBalancerDnsName,
-    // });
   }
 }

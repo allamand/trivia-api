@@ -6,7 +6,6 @@ on:
 
 env:
   PREVIEW_STACK_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.number }}
-  APP_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.pull_request.number }}
   AWS_DEFAULT_REGION: eu-west-1
 
 jobs:
