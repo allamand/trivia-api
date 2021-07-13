@@ -1,4 +1,4 @@
-FROM public.ecr.aws/bitnami/node:15-prod
+FROM public.ecr.aws/bitnami/node:16-prod
 
 RUN npm install -g npm@7.19.1
 
