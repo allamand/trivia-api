@@ -35,8 +35,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           #SLACK_COLOR: "${{ job.status == 'success' && 'good' || 'danger' }}"
           ECR_REPOSITORY: ${{ github.event.repository.name }}
-          #IMAGE_TAG: ${{ github.sha }}
-          IMAGE_TAG: ${{ github.event.number }}
+          IMAGE_TAG: ${{ github.sha }}
+          #IMAGE_TAG: ${{ github.event.number }}
         run: |
           # Build a docker container and
           # push it to ECR so that it can
