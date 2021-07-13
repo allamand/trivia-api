@@ -89,7 +89,7 @@ jobs:
           cdk synth  > ../template.yml
 
       - name: Create preview environment CloudFormation stack
-        run: aws cloudformation deploy --stack-name STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
+        run: aws cloudformation deploy --stack-name $STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
 
       - name: Retrieve preview environment URL
-        run: aws cloudformation describe-stacks --stack-name STACK_NAME --query 'Stacks[].Outputs[].OutputValue' | grep "https://"
+        run: aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[].Outputs[].OutputValue' | grep "https://"
