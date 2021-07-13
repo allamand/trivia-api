@@ -13,7 +13,7 @@ const repoName = process.env.ECR_REPOSITORY ? process.env.ECR_REPOSITORY : 'need
 const tag = process.env.IMAGE_TAG ? process.env.IMAGE_TAG : 'latest';
 
 new TriviaBackendStack(app, 'TriviaBackendStack', {
-  domainNam: domainName,
+  domainNa: domainName,
   domainZone: domainZone,
   vpcTagName: vpcTagName,
   repoName: repoName,
