@@ -1,15 +1,19 @@
-name: preview-bot
+name: prod
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled, unlabeled, reopened, closed]
+    types: [closed]
+branches:
+  - master
 
 env:
-  PREVIEW_STACK_NAME: preview-${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-pr-${{ github.event.number }}
+  STACK_NAME: ${{ github.event.repository.name }}
   AWS_DEFAULT_REGION: eu-west-1
 
 jobs:
   Build:
+    name: build-prod
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,10 +34,9 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           #SLACK_COLOR: "${{ job.status == 'success' && 'good' || 'danger' }}"
-          ECR_REPOSITORY: preview-bot-preview-images
+          ECR_REPOSITORY: ${{ github.event.repository.name }}
           #IMAGE_TAG: ${{ github.sha }}
-          #IMAGE_TAG: ${{ github.event.number }}
-          IMAGE_TAG: ${{ github.event.repository.owner.login }}-${{ github.event.repository.name }}-${{ github.sha }}
+          IMAGE_TAG: ${{ github.event.number }}
         run: |
           # Build a docker container and
           # push it to ECR so that it can
@@ -43,10 +46,10 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-  open-pull-request:
-    name: create-aws-preview
+  deploy-prod:
+    name: create-aws-prod
     needs: [Build]
-    if: 'github.event.action != ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     # # environment:
     #   name: prod
@@ -83,17 +86,7 @@ jobs:
           cdk synth  > ../template.yml
 
       - name: Create preview environment CloudFormation stack
-        run: aws cloudformation deploy --stack-name $PREVIEW_STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
+        run: aws cloudformation deploy --stack-name STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
 
       - name: Retrieve preview environment URL
-        run: aws cloudformation describe-stacks --stack-name $PREVIEW_STACK_NAME --query 'Stacks[].Outputs[].OutputValue' | grep "https://"
-
-  close-pull-request:
-    name: delete-aws-preview
-    if: 'github.event.action == ''closed'' && contains(toJSON(github.event.pull_request.labels), ''"name": "preview-bot"'')'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete preview environment CloudFormation stack
-        run: |
-          aws cloudformation delete-stack --stack-name $PREVIEW_STACK_NAME
-          aws cloudformation wait stack-delete-complete --stack-name $PREVIEW_STACK_NAME
+        run: aws cloudformation describe-stacks --stack-name STACK_NAME --query 'Stacks[].Outputs[].OutputValue' | grep "https://"
