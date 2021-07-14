@@ -1,12 +1,12 @@
 name: prod
 
 on:
-  push:
-    branches: [master]
+  # push:
+  #   branches: [master]
   pull_request:
     types: [closed]
-    branches:
-      - master
+  branches:
+    - master
   workflow_dispatch:
 
 env:
@@ -16,7 +16,8 @@ env:
 jobs:
   Build:
     name: build-prod
-    if: "github.event.pull_request.merged || github.ref == 'refs/heads/master'"
+    #if: "github.event.pull_request.merged || github.ref == 'refs/heads/master'"
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -52,7 +53,8 @@ jobs:
   deploy-prod:
     name: create-aws-prod
     needs: [Build]
-    if: "github.event.pull_request.merged || github.ref == 'refs/heads/master'"
+    #if: "github.event.pull_request.merged || github.ref == 'refs/heads/master'"
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     # # environment:
     #   name: prod

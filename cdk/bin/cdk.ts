@@ -12,7 +12,7 @@ const existingClusterName = process.env.CLUSTER_NAME ? process.env.CLUSTER_NAME 
 const repoName = process.env.ECR_REPOSITORY ? process.env.ECR_REPOSITORY : 'need-to-configure-ECR_REPOSITORY';
 const tag = process.env.IMAGE_TAG ? process.env.IMAGE_TAG : 'latest';
 
-new TriviaBackendStack(app, 'TriviaBackendStack', {
+new TriviaBackendStack(app, 'trivia-api', {
   domainName: domainName,
   domainZone: domainZone,
   vpcTagName: vpcTagName,
