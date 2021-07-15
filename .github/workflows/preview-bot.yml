@@ -89,7 +89,7 @@ jobs:
         run: aws cloudformation deploy --stack-name $PREVIEW_STACK_NAME --template-file template.yml --capabilities CAPABILITY_NAMED_IAM
 
       - name: Retrieve preview environment URL
-        run: echo $(aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[].Outputs[]' | jq -r '.[] | select ( .OutputKey|test("ServiceService.*") ) .OutputValue')"/api/trivia/all" 
+        run: echo $(aws cloudformation describe-stacks --stack-name $PREVIEW_STACK_NAME --query 'Stacks[].Outputs[]' | jq -r '.[] | select ( .OutputKey|test("ServiceService.*") ) .OutputValue')"/api/trivia/all" 
 
   close-pull-request:
     name: delete-aws-preview
