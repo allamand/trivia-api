@@ -6,6 +6,9 @@ You might be familiar with the concept of preview deployment from frontend tooli
 
 This patterns could also easilly be extended to any backend services or event whole infrasstructure.
 
+You can uses Preview Deployment in combination with whatever existing CI/CD for stages like production and staging.
+Because you're spinning up an entire set of infrastructure, it's open for your code reviewers to play with your enpoints and infrastructure resources. You can run automated or manual tests in thoses preview environments, without impacting other environment like other preview or existing staging environment.
+
 ## Infrastructure as code for our application
 
 In this sample, I showcase how you can uses [CDK](https://aws.amazon.com/cdk/) to build Infrastructure as code [CloudFormation](https://aws.amazon.com/cloudformation/) template that can then be automatically deployed to your AWS Account.
