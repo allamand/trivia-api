@@ -55,6 +55,8 @@ When you delete the branch, the bot will automatically destroy the environment y
 
 > If you don't want to create a preview environment from your PR, just don't mention the `preview-bot`.
 
+The deployment on the master is only triggered when you merge a PR on the master (it is not started if you directly push to master)
+
 ### With Github Workflow
 
 I have configured this project to also be able to deploy a preview environment automatically when we label the Pull Request with the `preview-bot` label.
